@@ -4,6 +4,8 @@
 
 ![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)
 ![Node.js >= 18](https://img.shields.io/badge/node-%3E%3D18-green.svg)
+![Tests](https://img.shields.io/badge/tests-10%20passing-brightgreen.svg)
+![Flows](https://img.shields.io/badge/flow_templates-11-orange.svg)
 
 ## What is codex-flow?
 
@@ -23,6 +25,9 @@ Think of it as **Makefile meets AI agent**: deterministic orchestration with int
 # Install
 npm install -g codex-flow
 
+# Or use directly via npx (no install needed)
+npx codex-flow run my-flow.flow.yaml
+
 # Validate your Codex CLI is working
 codex --version
 
@@ -34,6 +39,40 @@ codex-flow run my-first-flow.flow.yaml
 
 # Override variables at runtime
 codex-flow run flows/release.flow.yaml --var version=1.5.0
+```
+
+## Example Output
+
+```
+$ codex-flow run flows/release.flow.yaml --var version=1.2.0
+
+🚀 Flow: release — Automated software release workflow
+   Steps: 7
+
+  [Check Working Tree] starting...
+  [Check Working Tree] ✓ done (1.2s)
+  [Run Test Suite] starting...
+  [Run Test Suite] ✓ done (23.4s)
+  [Bump Version] starting...
+  [Bump Version] ✓ done (8.7s)
+  [Generate Changelog] starting...
+  [Generate Changelog] ✓ done (12.1s)
+  [Create Git Tag] starting...
+  [Create Git Tag] ✓ done (0.8s)
+  [Push to Remote] starting...
+  [Push to Remote] ✓ done (3.2s)
+  [Publish Package] starting...
+  [Publish Package] ✓ done (15.6s)
+
+✅ Flow completed in 65.1s
+
+  ✓ Check Working Tree
+  ✓ Run Test Suite
+  ✓ Bump Version
+  ✓ Generate Changelog
+  ✓ Create Git Tag
+  ✓ Push to Remote
+  ✓ Publish Package
 ```
 
 ## Flow File Format

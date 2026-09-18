@@ -1,0 +1,183 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Codex Flow",
+  "description": "YAML workflow definition for codex-flow",
+  "type": "object",
+  "required": ["name", "steps"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Flow name (used in CLI output and logs)"
+    },
+    "description": {
+      "type": "string",
+      "description": "Human-readable description of what this flow does"
+    },
+    "version": {
+      "type": "string",
+      "description": "Flow version (semver recommended)"
+    },
+    "variables": {
+      "type": "object",
+      "description": "Default variables available to all steps via {{variable_name}}",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "steps": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/definitions/step" }
+    }
+  },
+  "definitions": {
+    "step": {
+      "type": "object",
+      "required": ["id", "name", "type"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z][a-zA-Z0-9_-]*$",
+          "description": "Unique step identifier (used for variable references)"
+        },
+        "name": {
+          "type": "string",
+          "description": "Display name shown in CLI output"
+        },
+        "description": {
+          "type": "string",
+          "description": "Detailed description of what this step does"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["codex", "shell", "http", "wait", "condition"],
+          "description": "Step execution type"
+        },
+        "prompt": {
+          "type": "string",
+          "description": "Prompt for codex/condition steps, or command template for shell steps"
+        },
+        "command": {
+          "type": "string",
+          "description": "Shell command to execute (for shell/http steps)"
+        },
+        "input": {
+          "$ref": "#/definitions/stepInput"
+        },
+        "output": {
+          "$ref": "#/definitions/stepOutput"
+        },
+        "condition": {
+          "$ref": "#/definitions/condition"
+        },
+        "retry": {
+          "$ref": "#/definitions/retryConfig"
+        },
+        "timeout": {
+          "type": "integer",
+          "minimum": 1000,
+          "description": "Timeout in milliseconds (default: 120000 for shell, 300000 for codex)"
+        },
+        "parallel": {
+          "type": "boolean",
+          "default": false,
+          "description": "If true, this step runs in parallel with adjacent parallel steps"
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "type": { "const": "codex" } } },
+          "then": { "required": ["prompt"] }
+        },
+        {
+          "if": { "properties": { "type": { "const": "shell" } } },
+          "then": { "anyOf": [
+            { "required": ["command"] },
+            { "required": ["prompt"] }
+          ] }
+        },
+        {
+          "if": { "properties": { "type": { "const": "http" } } },
+          "then": { "anyOf": [
+            { "required": ["command"] },
+            { "required": ["prompt"] }
+          ] }
+        }
+      ]
+    },
+    "stepInput": {
+      "type": "object",
+      "properties": {
+        "file": {
+          "type": "string",
+          "description": "Path to a file to include in the step input"
+        },
+        "content": {
+          "type": "string",
+          "description": "Inline content (for wait: milliseconds as string; for http: request body)"
+        },
+        "template": {
+          "type": "string",
+          "description": "Template file path to render for input"
+        },
+        "env": {
+          "type": "object",
+          "description": "Environment variables or HTTP headers",
+          "additionalProperties": { "type": "string" }
+        }
+      }
+    },
+    "stepOutput": {
+      "type": "object",
+      "properties": {
+        "saveAs": {
+          "type": "string",
+          "description": "Variable name to store this step's output in"
+        },
+        "file": {
+          "type": "string",
+          "description": "File path to write the output to"
+        },
+        "format": {
+          "type": "string",
+          "enum": ["text", "json", "code"],
+          "default": "text"
+        }
+      }
+    },
+    "condition": {
+      "type": "object",
+      "required": ["when"],
+      "properties": {
+        "when": {
+          "type": "string",
+          "description": "JavaScript expression to evaluate (e.g., 'count > 5')"
+        },
+        "variables": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        }
+      }
+    },
+    "retryConfig": {
+      "type": "object",
+      "required": ["maxAttempts"],
+      "properties": {
+        "maxAttempts": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10
+        },
+        "delayMs": {
+          "type": "integer",
+          "default": 1000
+        },
+        "backoff": {
+          "type": "string",
+          "enum": ["fixed", "exponential"],
+          "default": "fixed"
+        }
+      }
+    }
+  }
+}
