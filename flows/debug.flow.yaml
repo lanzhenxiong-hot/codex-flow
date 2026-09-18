@@ -1,0 +1,23 @@
+name: debug
+description: "Systematic bug investigation and fix"
+variables:
+  error_message: ""
+  context: "production"
+steps:
+  - id: reproduce
+    name: "Reproduce Error"
+    type: codex
+    prompt: "Given this error, determine the code path, trigger condition, and minimal repro. Error: {{error_message}}"
+  - id: root-cause
+    name: "Identify Root Cause"
+    type: codex
+    prompt: "Perform root cause analysis: exact line, why the bug exists, whether it's systemic."
+  - id: fix
+    name: "Generate Fix"
+    type: codex
+    prompt: "Write a minimal fix with: code change (diff), a unit test that catches this bug, and explanation."
+  - id: verify
+    name: "Verify Fix"
+    type: shell
+    command: "npm test"
+    timeout: 120000

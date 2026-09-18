@@ -1,0 +1,38 @@
+name: release
+description: "Automated software release workflow"
+version: "1.0"
+variables:
+  version: "0.2.0"
+  registry: "npm"
+steps:
+  - id: check-status
+    name: "Check Working Tree"
+    type: shell
+    command: "git status --porcelain"
+    output:
+      saveAs: dirty_files
+  - id: run-tests
+    name: "Run Test Suite"
+    type: shell
+    command: "npm test"
+    timeout: 120000
+  - id: bump-version
+    name: "Bump Version"
+    type: codex
+    prompt: "Update the version in package.json to {{version}}. Also update CHANGELOG.md."
+  - id: generate-changelog
+    name: "Generate Changelog"
+    type: codex
+    prompt: "Read git log since last tag and generate a CHANGELOG entry for version {{version}}. Group into: Features, Bug Fixes, Breaking Changes."
+  - id: create-tag
+    name: "Create Git Tag"
+    type: shell
+    command: "git tag -a v{{version}} -m 'Release v{{version}}'"
+  - id: push
+    name: "Push to Remote"
+    type: shell
+    command: "git push origin --tags && git push origin main"
+  - id: publish
+    name: "Publish Package"
+    type: shell
+    command: "npm publish --access public"

@@ -1,0 +1,50 @@
+{
+  "name": "codex-flow",
+  "version": "0.1.0",
+  "description": "YAML-driven workflow engine for multi-step development tasks powered by Codex",
+  "type": "module",
+  "bin": {
+    "codex-flow": "./dist/index.js"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/types.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/index.ts",
+    "start": "node dist/index.js",
+    "lint": "eslint src/",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "keywords": [
+    "codex",
+    "openai",
+    "workflow",
+    "automation",
+    "cli",
+    "devops",
+    "agent"
+  ],
+  "author": "",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "commander": "^12.1.0",
+    "yaml": "^2.4.0",
+    "chalk": "^5.3.0",
+    "ora": "^8.0.1",
+    "picocolors": "^1.0.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.5.0",
+    "tsx": "^4.16.0",
+    "vitest": "^2.0.0",
+    "eslint": "^9.0.0",
+    "@eslint/js": "^9.0.0",
+    "typescript-eslint": "^8.0.0"
+  }
+}

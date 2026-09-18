@@ -1,0 +1,24 @@
+name: code-review
+description: "AI-powered code review for pull requests"
+variables:
+  pr_number: "1"
+  focus: "security and performance"
+steps:
+  - id: fetch-pr
+    name: "Fetch PR Diff"
+    type: shell
+    command: "gh pr diff {{pr_number}}"
+    output:
+      saveAs: pr_diff
+  - id: analyze
+    name: "Analyze Changes"
+    type: codex
+    prompt: "Review this PR diff. Focus on {{focus}}. Identify bugs, security issues, performance concerns. Provide severity, file, line, and suggested fix."
+  - id: summary
+    name: "Generate Review Summary"
+    type: codex
+    prompt: "Write a concise PR review comment (max 10 bullets) that a senior engineer would post."
+  - id: post-review
+    name: "Post Review"
+    type: shell
+    command: "gh pr review {{pr_number}} --comment"
