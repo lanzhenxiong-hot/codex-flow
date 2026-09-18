@@ -1,0 +1,36 @@
+name: perf-optimization
+description: "Performance profiling and optimization"
+variables:
+  target: "src/"
+  bottleneck: ""
+steps:
+  - id: profile
+    name: "Profile Code"
+    type: shell
+    command: "node --prof {{target}}/index.js 2>&1 | tail -20 || npx prof --dir ./src 2>&1 || echo 'Profile not available, using static analysis'"
+    timeout: 60000
+  - id: analyze
+    name: "Identify Bottlenecks"
+    type: codex
+    prompt: |
+      Analyze the performance characteristics of code in {{target}}.
+      {{bottleneck ? `Focus on: ${bottleneck}` : "Identify the top 5 performance bottlenecks."}}
+
+      For each issue, provide:
+      - Location (file:line)
+      - What's slow and why
+      - Estimated impact
+      - Optimization strategy
+  - id: optimize
+    name: "Apply Optimizations"
+    type: codex
+    prompt: |
+      Apply the top performance optimizations identified.
+      Make focused changes that provide the most improvement for least risk.
+      Add comments explaining why each optimization was made.
+  - id: benchmark
+    name: "Benchmark Results"
+    type: codex
+    prompt: |
+      Write a benchmark script that compares performance before and after optimization.
+      Use realistic data sizes and report p50/p95/p99 latencies.

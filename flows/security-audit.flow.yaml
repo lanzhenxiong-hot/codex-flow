@@ -1,0 +1,41 @@
+name: security-audit
+description: "Code security audit and hardening suggestions"
+variables:
+  target: "src/"
+  severity_threshold: "medium"
+steps:
+  - id: scan-deps
+    name: "Scan Dependencies"
+    type: shell
+    command: "npm audit --json 2>/dev/null || npm audit 2>&1"
+    timeout: 60000
+  - id: analyze-code
+    name: "Static Security Analysis"
+    type: codex
+    prompt: |
+      Perform a security audit on the codebase in {{target}}.
+      Look for:
+      1. Injection vulnerabilities (SQL, command, XSS)
+      2. Insecure authentication/authorization patterns
+      3. Sensitive data exposure (keys, tokens in code)
+      4. Insecure dependencies
+      5. Missing input validation
+
+      Report findings with severity (critical/high/medium/low), file, line, and fix recommendation.
+  - id: hardening
+    name: "Generate Hardening Script"
+    type: codex
+    prompt: |
+      Based on the security findings, generate:
+      1. A shell script that applies quick wins (file permissions, env var sanitization)
+      2. Code patches for critical/high severity issues
+      3. A security checklist for the team
+  - id: report
+    name: "Generate Report"
+    type: codex
+    prompt: |
+      Write a professional security audit report in Markdown format with:
+      - Executive summary
+      - Findings table (severity, file, description, fix)
+      - Risk assessment
+      - Recommended action plan (immediate/short-term/long-term)

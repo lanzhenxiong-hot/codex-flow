@@ -127,6 +127,9 @@ steps:
 | `flows/code-review.flow.yaml` | PR review: fetch diff → analyze → summarize → post |
 | `flows/doc-gen.flow.yaml` | Documentation: scan → generate README → add docstrings |
 | `flows/debug.flow.yaml` | Debug: reproduce → root cause → fix → verify |
+| `flows/security-audit.flow.yaml` | Security: scan deps → static analysis → hardening → report |
+| `flows/migration.flow.yaml` | Migration: assess → plan → execute → verify → cleanup |
+| `flows/perf-optimization.flow.yaml` | Performance: profile → identify bottlenecks → optimize → benchmark |
 
 ## CLI Commands
 

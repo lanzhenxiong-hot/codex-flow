@@ -1,0 +1,45 @@
+name: migration
+description: "Codebase migration and refactoring workflow"
+variables:
+  from: "CommonJS"
+  to: "ESM"
+  target: "."
+steps:
+  - id: assess
+    name: "Assess Migration Scope"
+    type: codex
+    prompt: |
+      Analyze the codebase in {{target}} and determine:
+      1. All files affected by migrating from {{from}} to {{to}}
+      2. Dependencies that may need updating
+      3. Configuration changes required
+      4. Risk assessment (high/medium/low) for each change
+  - id: plan
+    name: "Create Migration Plan"
+    type: codex
+    prompt: |
+      Create a detailed step-by-step migration plan:
+      - Ordered list of changes (smallest risk first)
+      - Rollback strategy for each step
+      - Test commands to verify each step
+      - Estimated time for each phase
+  - id: execute
+    name: "Execute Migration"
+    type: codex
+    prompt: |
+      Execute the migration plan. Apply changes incrementally:
+      1. Update package.json (type: module, imports)
+      2. Convert require() to import statements
+      3. Update file extensions if needed
+      4. Fix any path issues
+
+      Make minimal changes. Preserve all existing behavior.
+  - id: verify
+    name: "Verify Migration"
+    type: shell
+    command: "npm test"
+    timeout: 120000
+  - id: cleanup
+    name: "Cleanup"
+    type: codex
+    prompt: "Remove any leftover artifacts from the migration (unused requires, .cjs extensions, etc.)"
