@@ -26,25 +26,27 @@ export class FlowEngine {
       logs: [],
     };
 
+    const log = this.options.logger!;
+
     const context: ExecutionContext = {
       flow,
       variables: { ...(flow.variables ?? {}) },
       results: new Map(),
       logger: (msg: string) => {
-        this.options.logger!(msg);
+        log(msg);
         result.logs.push(msg);
       },
     };
 
-    this.options.logger(`\n🚀 Flow: ${flow.name}${flow.description ? ` — ${flow.description}` : ""}`);
-    this.options.logger(`   Steps: ${flow.steps.length}\n`);
+    log(`\n🚀 Flow: ${flow.name}${flow.description ? ` — ${flow.description}` : ""}`);
+    log(`   Steps: ${flow.steps.length}\n`);
 
     let i = 0;
     while (i < flow.steps.length) {
       const batch = this.collectParallelGroup(flow.steps, i);
 
       if (batch.length > 1) {
-        this.options.logger(`  ⚡ Parallel group: ${batch.map((s) => s.name).join(", ")}`);
+        log(`  ⚡ Parallel group: ${batch.map((s) => s.name).join(", ")}`);
         const results = await Promise.all(
           batch.map((step) => executeStep(step, context))
         );
@@ -53,7 +55,7 @@ export class FlowEngine {
           context.results.set(stepResult.stepId, stepResult);
           if (stepResult.status === "failed" && this.options.stopOnError) {
             result.status = "failed";
-            this.options.logger(`\n❌ Flow failed at step: ${stepResult.stepName}`);
+            log(`\n❌ Flow failed at step: ${stepResult.stepName}`);
             result.finishedAt = new Date();
             return result;
           }
@@ -66,7 +68,7 @@ export class FlowEngine {
 
         if (stepResult.status === "failed" && this.options.stopOnError) {
           result.status = "failed";
-          this.options.logger(`\n❌ Flow failed at step: ${stepResult.stepName}`);
+          log(`\n❌ Flow failed at step: ${stepResult.stepName}`);
           result.finishedAt = new Date();
           return result;
         }
@@ -77,7 +79,7 @@ export class FlowEngine {
 
     result.finishedAt = new Date();
     const duration = (result.finishedAt.getTime() - startedAt.getTime()) / 1000;
-    this.options.logger(`\n${result.status === "success" ? "✅" : "❌"} Flow completed in ${duration.toFixed(1)}s`);
+    log(`\n${result.status === "success" ? "✅" : "❌"} Flow completed in ${duration.toFixed(1)}s`);
     return result;
   }
 

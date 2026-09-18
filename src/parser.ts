@@ -100,5 +100,15 @@ export function parseFlowYAML(content: string): ParseResult {
     throw new Error(`Invalid flow config:\n${errors}`);
   }
 
-  return { flow: parsed.data as unknown as FlowConfig, warnings };
+  const flow = parsed.data as unknown as FlowConfig;
+
+  const ids = new Set<string>();
+  for (const step of flow.steps) {
+    if (ids.has(step.id)) {
+      throw new Error(`Duplicate step id: ${step.id}`);
+    }
+    ids.add(step.id);
+  }
+
+  return { flow, warnings };
 }
