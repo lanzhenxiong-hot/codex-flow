@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>codex-flow studio</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --border: #30363d;
+      --text: #e6edf3;
+      --text-dim: #7d8590;
+      --accent: #58a6ff;
+      --accent-dim: #1f6feb;
+      --green: #3fb950;
+      --orange: #d29922;
+      --red: #f85149;
+      --purple: #bc8cff;
+      --code-bg: #0d1117;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
+    
+    /* Header */
+    .header { display: flex; align-items: center; gap: 12px; padding: 12px 20px; background: var(--surface); border-bottom: 1px solid var(--border); }
+    .header .logo { font-weight: 700; font-size: 15px; color: var(--accent); }
+    .header .file-name { font-size: 13px; color: var(--text-dim); }
+    .header .spacer { flex: 1; }
+    .btn { padding: 6px 14px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); color: var(--text); font-size: 13px; cursor: pointer; transition: all 0.15s; }
+    .btn:hover { border-color: var(--accent); color: var(--accent); }
+    .btn-primary { background: var(--accent-dim); border-color: var(--accent-dim); color: #fff; }
+    .btn-primary:hover { background: var(--accent); border-color: var(--accent); }
+    .btn-danger:hover { border-color: var(--red); color: var(--red); }
+    
+    /* Main layout */
+    .main { flex: 1; display: flex; overflow: hidden; }
+    
+    /* Canvas */
+    .canvas { flex: 1; overflow-y: auto; padding: 30px; display: flex; flex-direction: column; align-items: center; }
+    .flow-title { text-align: center; margin-bottom: 24px; }
+    .flow-title h1 { font-size: 22px; font-weight: 600; }
+    .flow-title p { font-size: 13px; color: var(--text-dim); margin-top: 4px; }
+    
+    /* Step cards */
+    .steps-container { width: 100%; max-width: 600px; display: flex; flex-direction: column; align-items: center; }
+    .step-card { width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px 20px; cursor: pointer; transition: all 0.2s; position: relative; }
+    .step-card:hover { border-color: var(--accent); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(88,166,255,0.1); }
+    .step-card.active { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(88,166,255,0.2); }
+    .step-card .step-header { display: flex; align-items: center; gap: 10px; }
+    .step-card .step-number { width: 28px; height: 28px; border-radius: 50%; background: var(--accent-dim); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; }
+    .step-card .step-name { font-size: 14px; font-weight: 600; }
+    .step-card .step-type { font-size: 11px; padding: 2px 8px; border-radius: 10px; margin-left: auto; }
+    .type-codex { background: rgba(88,166,255,0.15); color: var(--accent); }
+    .type-shell { background: rgba(63,185,80,0.15); color: var(--green); }
+    .type-http { background: rgba(210,153,34,0.15); color: var(--orange); }
+    .type-wait { background: rgba(125,133,144,0.15); color: var(--text-dim); }
+    .type-condition { background: rgba(188,140,255,0.15); color: var(--purple); }
+    .step-card .step-preview { margin-top: 8px; font-size: 12px; color: var(--text-dim); font-family: 'SF Mono', 'Fira Code', monospace; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+    .step-card .parallel-badge { position: absolute; top: -8px; right: 12px; font-size: 10px; padding: 2px 6px; background: var(--purple); color: #fff; border-radius: 4px; }
+    
+    /* Connector */
+    .connector { width: 2px; height: 24px; background: var(--border); position: relative; }
+    .connector::after { content: '▼'; position: absolute; bottom: -8px; left: -5px; color: var(--border); font-size: 10px; }
+    
+    /* Add step button */
+    .add-step { margin-top: 16px; width: 100%; max-width: 600px; padding: 12px; border: 2px dashed var(--border); border-radius: 10px; text-align: center; color: var(--text-dim); font-size: 13px; cursor: pointer; transition: all 0.2s; }
+    .add-step:hover { border-color: var(--accent); color: var(--accent); }
+    
+    /* Side panel */
+    .panel { width: 380px; background: var(--surface); border-left: 1px solid var(--border); overflow-y: auto; display: none; }
+    .panel.open { display: block; }
+    .panel-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+    .panel-header h3 { font-size: 14px; font-weight: 600; }
+    .panel-close { cursor: pointer; color: var(--text-dim); font-size: 18px; }
+    .panel-close:hover { color: var(--text); }
+    .panel-body { padding: 20px; display: flex; flex-direction: column; gap: 14px; }
+    .form-group { display: flex; flex-direction: column; gap: 4px; }
+    .form-group label { font-size: 12px; color: var(--text-dim); font-weight: 500; }
+    .form-group input, .form-group select, .form-group textarea { padding: 8px 10px; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 13px; font-family: inherit; }
+    .form-group textarea { min-height: 80px; resize: vertical; font-family: 'SF Mono', 'Fira Code', monospace; font-size: 12px; }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: var(--accent); }
+    .form-row { display: flex; gap: 10px; }
+    .form-row .form-group { flex: 1; }
+    .checkbox-group { display: flex; align-items: center; gap: 8px; }
+    .checkbox-group input[type="checkbox"] { accent-color: var(--accent); }
+    
+    /* YAML preview */
+    .yaml-panel { width: 320px; background: var(--bg); border-left: 1px solid var(--border); overflow: hidden; display: none; flex-direction: column; }
+    .yaml-panel.open { display: flex; }
+    .yaml-panel-header { padding: 12px 16px; border-bottom: 1px solid var(--border); font-size: 12px; font-weight: 600; color: var(--text-dim); display: flex; align-items: center; justify-content: space-between; }
+    .yaml-content { flex: 1; overflow: auto; padding: 16px; font-family: 'SF Mono', 'Fira Code', monospace; font-size: 11px; line-height: 1.6; color: var(--text); white-space: pre-wrap; word-break: break-all; }
+    .yaml-content .key { color: var(--accent); }
+    .yaml-content .string { color: var(--green); }
+    .yaml-content .comment { color: var(--text-dim); }
+    
+    /* Empty state */
+    .empty-state { text-align: center; padding: 60px 20px; color: var(--text-dim); }
+    .empty-state h2 { font-size: 18px; margin-bottom: 8px; color: var(--text); }
+    .empty-state p { font-size: 13px; margin-bottom: 20px; }
+    
+    /* Toast */
+    .toast { position: fixed; bottom: 20px; right: 20px; padding: 10px 16px; background: var(--surface); border: 1px solid var(--green); border-radius: 8px; font-size: 13px; color: var(--green); opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+    .toast.show { opacity: 1; }
+    
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <span class="logo">⚡ codex-flow studio</span>
+    <span class="file-name" id="fileName">No file loaded</span>
+    <div class="spacer"></div>
+    <button class="btn" onclick="loadFile()">📂 Load</button>
+    <button class="btn" onclick="exportYaml()">⬇️ Export YAML</button>
+    <button class="btn btn-primary" onclick="saveFile()">💾 Save</button>
+  </div>
+  
+  <div class="main">
+    <div class="canvas" id="canvas">
+      <div class="empty-state" id="emptyState">
+        <h2>Welcome to codex-flow studio</h2>
+        <p>Load a flow file or create a new one to get started.</p>
+        <button class="btn btn-primary" onclick="newFlow()">+ New Flow</button>
+        <button class="btn" onclick="loadFile()" style="margin-left:8px">📂 Load File</button>
+      </div>
+      <div id="flowView" style="display:none">
+        <div class="flow-title">
+          <h1 id="flowName"></h1>
+          <p id="flowDesc"></p>
+        </div>
+        <div class="steps-container" id="stepsContainer"></div>
+        <div class="add-step" onclick="addStep()">+ Add Step</div>
+      </div>
+    </div>
+    
+    <div class="panel" id="editPanel">
+      <div class="panel-header">
+        <h3>Edit Step</h3>
+        <span class="panel-close" onclick="closePanel()">×</span>
+      </div>
+      <div class="panel-body">
+        <div class="form-group"><label>Step ID</label><input id="f-id" placeholder="step-id"></div>
+        <div class="form-group"><label>Name</label><input id="f-name" placeholder="Display name"></div>
+        <div class="form-group"><label>Type</label>
+          <select id="f-type">
+            <option value="codex">codex (AI)</option>
+            <option value="shell">shell</option>
+            <option value="http">http</option>
+            <option value="wait">wait</option>
+            <option value="condition">condition</option>
+          </select>
+        </div>
+        <div class="form-group" id="promptGroup"><label>Prompt</label><textarea id="f-prompt" placeholder="Describe what Codex should do..."></textarea></div>
+        <div class="form-group" id="commandGroup" style="display:none"><label>Command</label><textarea id="f-command" placeholder="Shell command or URL..."></textarea></div>
+        <div class="form-row">
+          <div class="form-group"><label>Timeout (ms)</label><input id="f-timeout" type="number" placeholder="120000"></div>
+          <div class="form-group"><label>Retry Attempts</label><input id="f-retry" type="number" placeholder="0" min="0" max="10"></div>
+        </div>
+        <div class="checkbox-group">
+          <input type="checkbox" id="f-parallel"><label for="f-parallel" style="font-size:13px">Parallel execution</label>
+        </div>
+        <div class="form-group"><label>Save output as (variable name)</label><input id="f-saveas" placeholder="my_variable"></div>
+        <div style="margin-top:12px; display:flex; gap:8px;">
+          <button class="btn btn-primary" onclick="saveStep()">Save Step</button>
+          <button class="btn btn-danger" onclick="deleteStep()">Delete</button>
+        </div>
+      </div>
+    </div>
+    
+    <div class="yaml-panel" id="yamlPanel">
+      <div class="yaml-panel-header">
+        <span>YAML Preview</span>
+        <span style="cursor:pointer" onclick="toggleYaml()">Hide</span>
+      </div>
+      <div class="yaml-content" id="yamlContent"></div>
+    </div>
+  </div>
+  
+  <div class="toast" id="toast"></div>
+
+  <script>
+    let flowData = { name: "", description: "", variables: {}, steps: [] };
+    let currentFile = "";
+    let activeStepIdx = -1;
+    
+    function init() {
+      fetch('/api/flow').then(r => r.json()).then(data => {
+        if (data.flow) {
+          flowData = data.flow;
+          currentFile = data.file || "";
+          document.getElementById('fileName').textContent = currentFile.split(/[\\/]/).pop();
+          document.getElementById('emptyState').style.display = 'none';
+          document.getElementById('flowView').style.display = 'block';
+          render();
+        }
+      });
+    }
+    
+    function render() {
+      document.getElementById('flowName').textContent = flowData.name || "Untitled Flow";
+      document.getElementById('flowDesc').textContent = flowData.description || "";
+      renderSteps();
+      renderYaml();
+    }
+    
+    function renderSteps() {
+      const container = document.getElementById('stepsContainer');
+      container.innerHTML = '';
+      flowData.steps.forEach((step, i) => {
+        if (i > 0) {
+          const conn = document.createElement('div');
+          conn.className = 'connector';
+          container.appendChild(conn);
+        }
+        const card = document.createElement('div');
+        card.className = 'step-card' + (i === activeStepIdx ? ' active' : '');
+        card.onclick = () => openPanel(i);
+        const preview = step.prompt || step.command || '';
+        card.innerHTML = `
+          ${step.parallel ? '<span class="parallel-badge">⚡ parallel</span>' : ''}
+          <div class="step-header">
+            <div class="step-number">${i + 1}</div>
+            <div class="step-name">${step.name}</div>
+            <span class="step-type type-${step.type}">${step.type}</span>
+          </div>
+          ${preview ? `<div class="step-preview">${escapeHtml(preview.slice(0, 100))}${preview.length > 100 ? '…' : ''}</div>` : ''}
+        `;
+        container.appendChild(card);
+      });
+    }
+    
+    function renderYaml() {
+      const yaml = flowToYaml();
+      document.getElementById('yamlContent').textContent = yaml;
+    }
+    
+    function flowToYaml() {
+      let y = `name: ${flowData.name}\n`;
+      if (flowData.description) y += `description: "${flowData.description}"\n`;
+      if (Object.keys(flowData.variables || {}).length > 0) {
+        y += `variables:\n`;
+        for (const [k, v] of Object.entries(flowData.variables)) {
+          y += `  ${k}: "${v}"\n`;
+        }
+      }
+      y += `\nsteps:\n`;
+      for (const s of flowData.steps) {
+        y += `  - id: ${s.id}\n`;
+        y += `    name: "${s.name}"\n`;
+        y += `    type: ${s.type}\n`;
+        if (s.prompt) y += `    prompt: ${yamlStr(s.prompt)}\n`;
+        if (s.command) y += `    command: ${yamlStr(s.command)}\n`;
+        if (s.timeout) y += `    timeout: ${s.timeout}\n`;
+        if (s.parallel) y += `    parallel: true\n`;
+        if (s.retry) y += `    retry:\n      maxAttempts: ${s.retry}\n`;
+        if (s.saveAs) y += `    output:\n      saveAs: ${s.saveAs}\n`;
+        y += `\n`;
+      }
+      return y;
+    }
+    
+    function yamlStr(s) {
+      if (s.includes('\n') || s.includes(':') || s.includes('#')) {
+        return '|\n' + s.split('\n').map(l => '      ' + l).join('\n');
+      }
+      return `"${s.replace(/"/g, '\\"')}"`;
+    }
+    
+    function openPanel(idx) {
+      activeStepIdx = idx;
+      const step = flowData.steps[idx];
+      document.getElementById('f-id').value = step.id;
+      document.getElementById('f-name').value = step.name;
+      document.getElementById('f-type').value = step.type;
+      document.getElementById('f-prompt').value = step.prompt || '';
+      document.getElementById('f-command').value = step.command || '';
+      document.getElementById('f-timeout').value = step.timeout || '';
+      document.getElementById('f-retry').value = step.retry || '';
+      document.getElementById('f-parallel').checked = !!step.parallel;
+      document.getElementById('f-saveas').value = step.saveAs || '';
+      updateTypeVisibility(step.type);
+      document.getElementById('editPanel').classList.add('open');
+      renderSteps();
+    }
+    
+    function closePanel() {
+      activeStepIdx = -1;
+      document.getElementById('editPanel').classList.remove('open');
+      renderSteps();
+    }
+    
+    function updateTypeVisibility(type) {
+      const needsPrompt = ['codex', 'condition'].includes(type);
+      const needsCommand = ['shell', 'http'].includes(type);
+      document.getElementById('promptGroup').style.display = needsPrompt || type === 'wait' ? '' : 'none';
+      document.getElementById('commandGroup').style.display = needsCommand ? '' : 'none';
+    }
+    
+    function saveStep() {
+      if (activeStepIdx < 0) return;
+      const type = document.getElementById('f-type').value;
+      const step = {
+        id: document.getElementById('f-id').value || `step-${activeStepIdx + 1}`,
+        name: document.getElementById('f-name').value || `Step ${activeStepIdx + 1}`,
+        type,
+        prompt: ['codex', 'condition'].includes(type) ? document.getElementById('f-prompt').value || undefined : undefined,
+        command: ['shell', 'http'].includes(type) ? document.getElementById('f-command').value || undefined : (type === 'wait' ? document.getElementById('f-prompt').value || '1000' : undefined),
+        timeout: document.getElementById('f-timeout').value ? parseInt(document.getElementById('f-timeout').value) : undefined,
+        retry: document.getElementById('f-retry').value ? parseInt(document.getElementById('f-retry').value) : undefined,
+        parallel: document.getElementById('f-parallel').checked || undefined,
+        saveAs: document.getElementById('f-saveas').value || undefined,
+      };
+      flowData.steps[activeStepIdx] = step;
+      render();
+      showToast('Step saved');
+    }
+    
+    function addStep() {
+      const idx = flowData.steps.length;
+      flowData.steps.push({ id: `step-${idx + 1}`, name: `New Step ${idx + 1}`, type: 'codex', prompt: '' });
+      render();
+      openPanel(idx);
+    }
+    
+    function deleteStep() {
+      if (activeStepIdx < 0) return;
+      flowData.steps.splice(activeStepIdx, 1);
+      closePanel();
+      render();
+      showToast('Step deleted');
+    }
+    
+    function newFlow() {
+      flowData = { name: "my-new-flow", description: "A new workflow", variables: {}, steps: [
+        { id: "step-1", name: "First Step", type: "codex", prompt: "Describe your task here" }
+      ]};
+      currentFile = "";
+      document.getElementById('fileName').textContent = "Untitled";
+      document.getElementById('emptyState').style.display = 'none';
+      document.getElementById('flowView').style.display = 'block';
+      render();
+    }
+    
+    async function loadFile() {
+      const path = prompt("Enter path to .flow.yaml file:");
+      if (!path) return;
+      const res = await fetch('/api/load', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ path }) });
+      const data = await res.json();
+      if (data.error) { alert(data.error); return; }
+      const flowRes = await fetch('/api/flow');
+      const flowData = await flowRes.json();
+      flowData = flowData.flow;
+      currentFile = data.file;
+      document.getElementById('fileName').textContent = path.split(/[\\/]/).pop();
+      document.getElementById('emptyState').style.display = 'none';
+      document.getElementById('flowView').style.display = 'block';
+      render();
+    }
+    
+    async function saveFile() {
+      if (!currentFile) {
+        currentFile = prompt("Save as (file path):", (flowData.name || "my-flow") + ".flow.yaml");
+        if (!currentFile) return;
+      }
+      await fetch('/api/flow', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ yaml: flowToYaml(), file: currentFile, save: true }) });
+      showToast('Saved to ' + currentFile);
+    }
+    
+    function exportYaml() {
+      const blob = new Blob([flowToYaml()], { type: 'text/yaml' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = (flowData.name || 'flow') + '.flow.yaml';
+      a.click();
+      URL.revokeObjectURL(a.href);
+      showToast('YAML exported');
+    }
+    
+    function toggleYaml() {
+      const p = document.getElementById('yamlPanel');
+      p.classList.toggle('open');
+    }
+    
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2000);
+    }
+    
+    function escapeHtml(s) {
+      return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+    
+    document.getElementById('f-type').addEventListener('change', (e) => updateTypeVisibility(e.target.value));
+    
+    init();
+  </script>
+</body>
+</html>
