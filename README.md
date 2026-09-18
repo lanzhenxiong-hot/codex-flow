@@ -181,6 +181,66 @@ codex-flow validate <file>
 
 # Generate a starter template
 codex-flow init [name]
+
+# Interactive wizard — answers questions, generates a custom flow file
+codex-flow init --interactive
+
+# Natural language → YAML (powered by Codex)
+codex-flow generate "test, build, and deploy my app on every push"
+
+# Generate with custom output file
+codex-flow generate "run security audit and generate report" -o audit.flow.yaml
+```
+
+### Flow Generation
+
+Two ways to create flow files without hand-writing YAML:
+
+**1. Interactive Wizard**
+
+```bash
+$ codex-flow init --interactive
+
+🪄 codex-flow interactive wizard
+
+Flow name [default: my-flow]: auto-release
+Description: Full release pipeline
+
+--- Variables (press Enter to skip) ---
+  key=value (or 'done' to finish): version=1.0.0
+  key=value (or 'done' to finish): done
+
+--- Steps (press Enter on step name to finish) ---
+  Step 1 name (Enter to finish): Run Tests
+    Type [codex/shell/http/wait/condition] (default: codex): shell
+    Command/URL: npm test
+    Parallel? [y/N]: n
+    Timeout ms (Enter to skip): 120000
+  Step 2 name (Enter to finish): Bump Version
+    Type [codex/shell/http/wait/condition] (default: codex):
+    Prompt: Update package.json to {{version}} and regenerate changelog
+    ...
+  Step 3 name (Enter to finish):
+
+✅ Created: auto-release.flow.yaml
+   Validate: codex-flow validate auto-release.flow.yaml
+   Run: codex-flow run auto-release.flow.yaml
+```
+
+**2. Natural Language (AI-powered)**
+
+Describe what you want in plain English — Codex generates the YAML:
+
+```bash
+$ codex-flow generate "I want to run unit tests, integration tests, and lint in parallel, then build if all pass"
+
+🤖 Generating flow from: "I want to run unit tests, integration tests, and lint in parallel, then build if all pass"
+
+✅ Generated valid flow: parallel-test-build (4 steps)
+   Steps: Unit Tests → Integration Tests → Lint → Build
+
+📄 Saved to: generated.flow.yaml
+   Run it: codex-flow run generated.flow.yaml
 ```
 
 ## Architecture
