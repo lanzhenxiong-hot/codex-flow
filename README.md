@@ -190,6 +190,9 @@ codex-flow generate "test, build, and deploy my app on every push"
 
 # Generate with custom output file
 codex-flow generate "run security audit and generate report" -o audit.flow.yaml
+
+# Launch visual flow editor in browser (opens http://localhost:3210)
+codex-flow studio [-p port] [-f flow-file.yaml]
 ```
 
 ### Flow Generation
@@ -283,9 +286,11 @@ $ codex-flow generate "I want to run unit tests, integration tests, and lint in 
 
 ## Roadmap
 
-- [ ] Flow file validation with autocomplete
+- [x] Flow file validation with autocomplete (JSON Schema)
+- [x] Interactive init wizard + AI-powered `generate` command
+- [x] Web Studio — visual flow editor in browser
 - [ ] Plugin system for custom step types
-- [ ] Flow file sharing/registry
-- [ ] Web dashboard for flow execution history
 - [ ] GitHub Action for CI integration
+- [ ] Flow file sharing/registry
 - [ ] Template marketplace
+- [ ] Execution history & monitoring dashboard
