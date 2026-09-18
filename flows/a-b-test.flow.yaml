@@ -1,0 +1,51 @@
+name: a-b-test
+description: "Generate and validate A/B test implementations"
+variables:
+  feature: ""
+  metric: ""
+  sample_size: "10000"
+steps:
+  - id: design
+    name: "Design Experiment"
+    type: codex
+    prompt: |
+      Design an A/B test for: {{feature}}
+      Primary metric: {{metric}}
+      Expected sample size: {{sample_size}}
+
+      Provide:
+      1. Hypothesis statement
+      2. Variant descriptions (A and B)
+      3. Success criteria (statistical significance level, MDE)
+      4. Estimated duration
+      5. Guardrail metrics to monitor
+  - id: implement
+    name: "Implement Variants"
+    type: codex
+    prompt: |
+      Implement the A/B test variants in the codebase:
+      - Add feature flag infrastructure if not present
+      - Create variant A (control) and variant B (treatment)
+      - Add analytics/event tracking for both variants
+      - Add a /admin toggle to switch variants for QA
+  - id: stats
+    name: "Calculate Sample Size"
+    type: codex
+    prompt: |
+      Given:
+      - Baseline conversion: assume 5%
+      - MDE: 10% relative lift
+      - Alpha: 0.05
+      - Power: 0.80
+
+      Calculate required sample size per group.
+      Write a Python script that computes this and outputs the result.
+  - id: report-template
+    name: "Generate Report Template"
+    type: codex
+    prompt: |
+      Create a Markdown template for the A/B test results report:
+      - Summary (1 paragraph)
+      - Results table (metric, variant A, variant B, lift, p-value)
+      - Confidence interval visualization (ASCII)
+      - Decision and next steps

@@ -1,0 +1,40 @@
+name: competitive-analysis
+description: "Analyze competitors and generate strategic recommendations"
+variables:
+  my_product: ""
+  competitors: ""
+  focus: "features and pricing"
+steps:
+  - id: research
+    name: "Gather Intelligence"
+    type: codex
+    prompt: |
+      Research and analyze these competitors: {{competitors}}
+      Focus on: {{focus}}
+
+      For each competitor, identify:
+      1. Core features and differentiators
+      2. Pricing model
+      3. Target market
+      4. Known weaknesses/gaps
+  - id: gap-analysis
+    name: "Gap Analysis"
+    type: codex
+    prompt: |
+      Compare {{my_product}} against the identified competitors.
+      Create a feature matrix showing:
+      - Features we have that they don't (our moat)
+      - Features they have that we don't (our gaps)
+      - Parity features (table stakes)
+
+      Prioritize gaps by: user impact × effort to close
+  - id: strategy
+    name: "Strategic Recommendations"
+    type: codex
+    prompt: |
+      Based on the gap analysis, write 5 strategic recommendations for {{my_product}}:
+      1. What to build next (highest ROI)
+      2. What to deprecate or not invest in
+      3. Pricing positioning opportunity
+      4. A feature to ship in 30 days that competitors don't have
+      5. A messaging/positioning shift

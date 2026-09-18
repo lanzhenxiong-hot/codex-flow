@@ -1,0 +1,37 @@
+name: onboarding-dev
+description: "Guide a new developer through project setup and understanding"
+variables:
+  project_url: ""
+  role: "backend"
+steps:
+  - id: clone
+    name: "Clone & Setup"
+    type: shell
+    command: "git clone {{project_url}} /tmp/project && cd /tmp/project && npm install"
+    timeout: 300000
+  - id: architecture
+    name: "Explain Architecture"
+    type: codex
+    prompt: |
+      Analyze this codebase and explain:
+      1. High-level architecture (diagram in ASCII)
+      2. Key modules and their responsibilities
+      3. Data flow through the system
+      4. External dependencies and their roles
+      5. Where to start reading code as a new {{role}} developer
+  - id: first-task
+    name: "Suggest First Task"
+    type: codex
+    prompt: |
+      Suggest a good first contribution task for a new developer:
+      - Small scope (2-4 hours)
+      - Touches core code (not just docs)
+      - Has clear acceptance criteria
+      - Low risk of breaking things
+
+      Provide: task description, files to modify, test commands to run.
+  - id: setup-verify
+    name: "Verify Environment"
+    type: shell
+    command: "cd /tmp/project && npm test 2>&1 | tail -20"
+    timeout: 120000

@@ -1,0 +1,37 @@
+name: deploy-checklist
+description: "Pre-deployment verification and deployment automation"
+variables:
+  environment: "production"
+  version: ""
+steps:
+  - id: pre-checks
+    name: "Pre-deploy Checks"
+    type: shell
+    command: "npm test && npx tsc --noEmit && npm run lint"
+    timeout: 180000
+  - id: canary
+    name: "Deploy Canary"
+    type: codex
+    prompt: |
+      Write a canary deployment script that:
+      1. Deploys version {{version}} to a canary instance (10% traffic)
+      2. Monitors error rate, p95 latency, and CPU for 15 minutes
+      3. Auto-rolls back if error rate exceeds 1%
+      4. Reports pass/fail with metrics
+
+      Environment: {{environment}}
+  - id: full-deploy
+    name: "Full Deployment"
+    type: codex
+    prompt: |
+      Generate the full deployment script:
+      - Progressive rollout (10% → 50% → 100%)
+      - Health check at each stage (30s wait between)
+      - Database migration step (if schema changes detected)
+      - Rollback procedure (documented, not just coded)
+      - Post-deploy smoke tests
+  - id: verify
+    name: "Post-deploy Verification"
+    type: shell
+    command: "curl -s https://health.{{environment}}.example.com/health && echo 'OK'"
+    timeout: 30000
