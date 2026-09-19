@@ -5,7 +5,7 @@
 ![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)
 ![Node.js >= 18](https://img.shields.io/badge/node-%3E%3D18-green.svg)
 ![Tests](https://img.shields.io/badge/tests-10%20passing-brightgreen.svg)
-![Flows](https://img.shields.io/badge/flow_templates-11-orange.svg)
+![Flows](https://img.shields.io/badge/flow_templates-14-orange.svg)
 
 ## What is codex-flow?
 
@@ -169,12 +169,39 @@ steps:
 | `flows/security-audit.flow.yaml` | Security: scan deps → static analysis → hardening → report |
 | `flows/migration.flow.yaml` | Migration: assess → plan → execute → verify → cleanup |
 | `flows/perf-optimization.flow.yaml` | Performance: profile → identify bottlenecks → optimize → benchmark |
+| `flows/a-b-test.flow.yaml` | A/B testing: design → implement → stats → report |
+| `flows/deploy-checklist.flow.yaml` | Deployment: pre-checks → canary → full → verify |
+| `flows/competitive-analysis.flow.yaml` | Strategy: research → gap analysis → recommendations |
+| `flows/onboarding-dev.flow.yaml` | Onboarding: clone → architecture → first task → verify |
+| `flows/composite-demo.flow.yaml` | **Composition demo**: uses `include` to combine shared flows |
+
+### Flow Composition (`include`)
+
+Flows can reference other flow files to build modular, reusable pipelines:
+
+```yaml
+name: full-pipeline
+include:
+  - ./shared/pre-checks.flow.yaml
+  - ./shared/post-deploy.flow.yaml
+
+steps:
+  - id: build
+    name: "Build"
+    type: shell
+    command: "npm run build"
+```
+
+Included steps are flattened into the parent with a `[prefix]` name. Variables merge (parent wins).
 
 ## CLI Commands
 
 ```bash
 # Run a flow
 codex-flow run <file> [--var k=v] [--continue] [--quiet]
+
+# Preview without executing (dry run)
+codex-flow run <file> --dry-run
 
 # Validate without executing
 codex-flow validate <file>
