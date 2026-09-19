@@ -8,6 +8,7 @@ export interface FlowConfig {
   version?: string;
   variables?: Record<string, string>;
   steps: StepConfig[];
+  include?: string[];
 }
 
 export interface StepConfig {

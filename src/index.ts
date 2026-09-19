@@ -23,7 +23,8 @@ program
   .option("-v, --var <key=value...>", "Override variables (key=value)")
   .option("--continue", "Continue on step failure", false)
   .option("--quiet", "Suppress step output", false)
-  .action((file: string, options: { var?: string[]; continue: boolean; quiet: boolean }) => {
+  .option("--dry-run", "Validate and print plan without executing", false)
+  .action((file: string, options: { var?: string[]; continue: boolean; quiet: boolean; dryRun: boolean }) => {
     const flowPath = resolve(file);
     const { flow } = parseFlowFile(flowPath);
 
@@ -34,6 +35,26 @@ program
           flow.variables = { ...(flow.variables ?? {}), [key]: rest.join("=") };
         }
       }
+    }
+
+    if (options.dryRun) {
+      console.log(`\n🔍 Dry Run: ${flow.name}`);
+      console.log(`   ${flow.steps.length} steps\n`);
+      flow.steps.forEach((step, i) => {
+        const typeIcon = { codex: "🤖", shell: "🖥️", http: "🌐", wait: "⏳", condition: "❓" }[step.type] ?? "•";
+        const parallelTag = step.parallel ? " ⚡" : "";
+        const timeoutTag = step.timeout ? ` [${step.timeout}ms]` : "";
+        console.log(`  ${i + 1}. ${typeIcon} ${step.name}${parallelTag}${timeoutTag}`);
+        const detail = step.prompt || step.command || "";
+        if (detail) {
+          const preview = detail.length > 80 ? detail.slice(0, 77) + "..." : detail;
+          console.log(`     → ${preview}`);
+        }
+      });
+      const totalTimeout = flow.steps.reduce((sum, s) => sum + (s.timeout ?? 0), 0);
+      console.log(`\n   Estimated max time: ${Math.round(totalTimeout / 1000)}s`);
+      console.log(`   To execute: codex-flow run ${flowPath}`);
+      return;
     }
 
     const logger = options.quiet

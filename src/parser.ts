@@ -1,5 +1,5 @@
 import { readFileSync, existsSync } from "node:fs";
-import { resolve } from "node:path";
+import { resolve, dirname } from "node:path";
 import YAML from "yaml";
 import { z } from "zod";
 import type { FlowConfig, StepConfig } from "./types.js";
@@ -49,6 +49,7 @@ const FlowSchema = z.object({
   version: z.string().optional(),
   variables: z.record(z.string()).optional(),
   steps: z.array(StepSchema).min(1),
+  include: z.array(z.string()).optional(),
 });
 
 export interface ParseResult {
@@ -85,6 +86,10 @@ export function parseFlowFile(filePath: string): ParseResult {
     ids.add(step.id);
   }
 
+  if (flow.include?.length) {
+    resolveIncludes(flow, absolutePath, warnings);
+  }
+
   return { flow, warnings };
 }
 
@@ -111,4 +116,56 @@ export function parseFlowYAML(content: string): ParseResult {
   }
 
   return { flow, warnings };
+}
+
+function resolveIncludes(flow: FlowConfig, baseDir: string, warnings: string[]): void {
+  for (const includePath of flow.include!) {
+    const resolved = resolve(dirname(baseDir), includePath);
+    if (!existsSync(resolved)) {
+      warnings.push(`Include not found: ${includePath} (resolved: ${resolved})`);
+      continue;
+    }
+
+    const raw = readFileSync(resolved, "utf-8");
+    const data = YAML.parse(raw);
+    const parsed = FlowSchema.safeParse(data);
+
+    if (!parsed.success) {
+      warnings.push(`Invalid included flow: ${includePath}`);
+      continue;
+    }
+
+    const included = parsed.data as unknown as FlowConfig;
+
+    // Merge variables
+    if (included.variables) {
+      flow.variables = { ...included.variables, ...(flow.variables ?? {}) };
+    }
+
+    // Prefix step IDs to avoid collisions
+    const prefix = includePath
+      .replace(/\.flow\.yaml$/, "")
+      .replace(/\.yaml$/, "")
+      .replace(/[^a-zA-Z0-9]/g, "-");
+
+    for (const step of included.steps) {
+      const newId = `${prefix}-${step.id}`;
+      flow.steps.push({
+        ...step,
+        id: newId,
+        name: `[${prefix}] ${step.name}`,
+      });
+    }
+
+    // Recursively resolve nested includes
+    if (included.include?.length) {
+      const tempFlow: FlowConfig = { ...included, steps: [] };
+      resolveIncludes(tempFlow, resolved, warnings);
+      for (const step of tempFlow.steps) {
+        flow.steps.push(step);
+      }
+    }
+  }
+
+  flow.include = undefined;
 }

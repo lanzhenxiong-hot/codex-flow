@@ -1,0 +1,23 @@
+name: pre-checks
+description: "Shared pre-deployment checks"
+steps:
+  - id: lint
+    name: "Lint"
+    type: shell
+    command: "npm run lint"
+    timeout: 60000
+    parallel: true
+
+  - id: typecheck
+    name: "Type Check"
+    type: shell
+    command: "npx tsc --noEmit"
+    timeout: 60000
+    parallel: true
+
+  - id: unit-tests
+    name: "Unit Tests"
+    type: shell
+    command: "npm run test:unit"
+    timeout: 120000
+    parallel: true

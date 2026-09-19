@@ -1,0 +1,73 @@
+name: "Codex Flow"
+description: "Run a codex-flow workflow in GitHub Actions"
+inputs:
+  flow-file:
+    description: "Path to the .flow.yaml file to execute"
+    required: true
+  vars:
+    description: "Additional variables as key=value pairs (space-separated)"
+    required: false
+    default: ""
+  continue-on-error:
+    description: "Continue execution even if a step fails"
+    required: false
+    default: "false"
+  quiet:
+    description: "Suppress step output"
+    required: false
+    default: "false"
+outputs:
+  status:
+    description: "Final flow status (success/failed/cancelled)"
+    value: ${{ steps.run.outputs.status }}
+runs:
+  using: "composite"
+  steps:
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: "20"
+
+    - name: Install dependencies
+      shell: bash
+      run: npm ci || npm install
+
+    - name: Install Codex CLI
+      shell: bash
+      run: npm install -g @openai/codex
+
+    - name: Authenticate Codex
+      shell: bash
+      env:
+        OPENAI_API_KEY: ${{ env.OPENAI_API_KEY }}
+      run: echo "Codex will use OPENAI_API_KEY from environment"
+
+    - name: Validate flow
+      shell: bash
+      run: npx tsx src/index.ts validate "${{ inputs.flow-file }}"
+
+    - name: Run flow
+      id: run
+      shell: bash
+      env:
+        OPENAI_API_KEY: ${{ env.OPENAI_API_KEY }}
+      run: |
+        CMD="npx tsx src/index.ts run ${{ inputs.flow-file }}"
+        if [ -n "${{ inputs.vars }}" ]; then
+          for var in ${{ inputs.vars }}; do
+            CMD="$CMD --var $var"
+          done
+        fi
+        if [ "${{ inputs.continue-on-error }}" = "true" ]; then
+          CMD="$CMD --continue"
+        fi
+        if [ "${{ inputs.quiet }}" = "true" ]; then
+          CMD="$CMD --quiet"
+        fi
+        $CMD
+        if [ $? -eq 0 ]; then
+          echo "status=success" >> $GITHUB_OUTPUT
+        else
+          echo "status=failed" >> $GITHUB_OUTPUT
+          exit 1
+        fi

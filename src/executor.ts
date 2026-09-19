@@ -106,7 +106,7 @@ async function executeCodexStep(
     }
   }
 
-  const args = ["exec", "--quiet"];
+  const args = ["exec"];
   if (step.input?.env) {
     for (const [key, value] of Object.entries(step.input.env)) {
       args.push(`--env`, `${key}=${value}`);

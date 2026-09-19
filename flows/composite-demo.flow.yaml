@@ -1,0 +1,22 @@
+name: composite-demo
+description: "Demonstrates flow composition via include"
+variables:
+  project: "my-app"
+
+# This flow includes steps from other flow files
+include:
+  - ./shared/pre-checks.flow.yaml
+  - ./shared/post-deploy.flow.yaml
+
+steps:
+  - id: main-task
+    name: "Primary Task"
+    type: codex
+    prompt: "Execute the main development task for {{project}}"
+
+  - id: final-report
+    name: "Final Report"
+    type: codex
+    prompt: |
+      Generate a summary of everything that happened in this flow run.
+      Include: steps completed, any failures, time taken, and recommendations.
